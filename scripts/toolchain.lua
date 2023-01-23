@@ -39,6 +39,17 @@ local function crtNone()
 			"-mstackrealign",
 		}
 
+	configuration { "orin" }
+
+		buildoptions {
+			"-mpreferred-stack-boundary=4",
+			"-mstackrealign",
+		}
+
+		linkoptions {
+			"-mpreferred-stack-boundary=4",
+			"-mstackrealign",
+		}
 	configuration {}
 end
 
@@ -92,6 +103,7 @@ function toolchain(_buildDir, _libDir)
 			{ "orbis",           "Orbis"                      },
 			{ "riscv",           "RISC-V"                     },
 			{ "rpi",             "RaspberryPi"                },
+			{ "orin",            "nVidia Jetson Orin"         },
 		},
 	}
 
@@ -302,6 +314,9 @@ function toolchain(_buildDir, _libDir)
 
 		elseif "linux-arm-gcc" == _OPTIONS["gcc"] then
 			location (path.join(_buildDir, "projects", _ACTION .. "-linux-arm-gcc"))
+
+		elseif "orin" == _OPTIONS["gcc"] then
+			location (path.join(_buildDir, "projects", _ACTION .. "-orin"))
 
 		elseif "linux-ppc64le-gcc" == _OPTIONS["gcc"] then
  			location (path.join(_buildDir, "projects", _ACTION .. "-linux-ppc64le-gcc"))
@@ -662,6 +677,9 @@ function toolchain(_buildDir, _libDir)
 	configuration { "linux-*" }
 		includedirs { path.join(bxDir, "include/compat/linux") }
 
+	configuration { "orin" }
+		includedirs { path.join(bxDir, "include/compat/linux") }
+
 	configuration { "linux-gcc" }
 		buildoptions {
 			"-mfpmath=sse",
@@ -727,13 +745,42 @@ function toolchain(_buildDir, _libDir)
 		}
 
 	configuration { "linux-arm-gcc" }
-		targetdir (path.join(_buildDir, "linux32_arm_gcc/bin"))
-		objdir (path.join(_buildDir, "linux32_arm_gcc/obj"))
-		libdirs { path.join(_libDir, "lib/linux32_arm_gcc") }
+		targetdir (path.join(_buildDir, "linux_arm_gcc/bin"))
+		objdir (path.join(_buildDir, "linux_arm_gcc/obj"))
+		libdirs { path.join(_libDir, "lib/linux_arm_gcc") }
 		buildoptions {
 			"-Wunused-value",
 			"-Wundef",
 		}
+		links {
+			"rt",
+			"dl",
+		}
+		linkoptions {
+			"-Wl,--gc-sections",
+		}
+
+	configuration { "orin" }
+		targetdir (path.join(_buildDir, "orin/bin"))
+		objdir (path.join(_buildDir, "orin/obj"))
+		includedirs {
+			path.join(bxDir, "include/compat/linux"),
+			"/opt/vc/include",
+			"/opt/vc/include/interface/vcos/pthreads",
+			"/opt/vc/include/interface/vmcs_host/linux",
+		}
+		libdirs { 
+			path.join(_libDir, "lib/orin"),
+			"/opt/vc/lib",
+		}
+		buildoptions {
+			"-Wunused-value",
+			"-Wundef",
+			"-march=armv8.2-a",
+			"-mtune=cortex-a76",
+			"-fPIC",
+			"-Wshadow",
+        }
 		links {
 			"rt",
 			"dl",
