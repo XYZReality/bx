@@ -549,6 +549,9 @@ function toolchain(_buildDir, _libDir)
 		libdirs {
 			path.join(_libDir, "lib/win32_" .. _ACTION),
 		}
+		removeflags {
+			"StaticRuntime",
+		}
 
 	configuration { "x64", "vs*" }
 		defines { "_WIN64" }
@@ -556,6 +559,9 @@ function toolchain(_buildDir, _libDir)
 		objdir (path.join(_buildDir, "win64_" .. _ACTION, "obj"))
 		libdirs {
 			path.join(_libDir, "lib/win64_" .. _ACTION),
+		}
+		removeflags {
+			"StaticRuntime",
 		}
 
 	configuration { "x32", "vs2017" }
