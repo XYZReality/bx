@@ -10,40 +10,52 @@
 #include "allocator.h"
 #include "uint32_t.h"
 
+#ifndef bgfx_handle
+#if BGFX_CONFIG_USE_32BIT_HANDLES
+typedef uint32_t bgfx_handle;
+#else
+typedef uint16_t bgfx_handle;
+#endif
+#endif
+
 namespace bx
 {
-	constexpr uint16_t kInvalidHandle = UINT16_MAX;
+#if BGFX_CONFIG_USE_32BIT_HANDLES
+	constexpr bgfx_handle kInvalidHandle = UINT32_MAX;
+#else
+	constexpr bgfx_handle kInvalidHandle = UINT16_MAX;
+#endif
 
 	///
 	class HandleAlloc
 	{
 	public:
 		///
-		HandleAlloc(uint16_t _maxHandles);
+		HandleAlloc(bgfx_handle _maxHandles);
 
 		///
 		~HandleAlloc();
 
 		///
-		const uint16_t* getHandles() const;
+		const bgfx_handle* getHandles() const;
 
 		///
-		uint16_t getHandleAt(uint16_t _at) const;
+		bgfx_handle getHandleAt(bgfx_handle _at) const;
 
 		///
-		uint16_t getNumHandles() const;
+		bgfx_handle getNumHandles() const;
 
 		///
-		uint16_t getMaxHandles() const;
+		bgfx_handle getMaxHandles() const;
 
 		///
-		uint16_t alloc();
+		bgfx_handle alloc();
 
 		///
-		bool isValid(uint16_t _handle) const;
+		bool isValid(bgfx_handle _handle) const;
 
 		///
-		void free(uint16_t _handle);
+		void free(bgfx_handle _handle);
 
 		///
 		void reset();
@@ -52,23 +64,23 @@ namespace bx
 		HandleAlloc();
 
 		///
-		uint16_t* getDensePtr() const;
+		bgfx_handle* getDensePtr() const;
 
 		///
-		uint16_t* getSparsePtr() const;
+		bgfx_handle* getSparsePtr() const;
 
-		uint16_t m_numHandles;
-		uint16_t m_maxHandles;
+		bgfx_handle m_numHandles;
+		bgfx_handle m_maxHandles;
 	};
 
 	///
-	HandleAlloc* createHandleAlloc(AllocatorI* _allocator, uint16_t _maxHandles);
+	HandleAlloc* createHandleAlloc(AllocatorI* _allocator, bgfx_handle _maxHandles);
 
 	///
 	void destroyHandleAlloc(AllocatorI* _allocator, HandleAlloc* _handleAlloc);
 
 	///
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	class HandleAllocT : public HandleAlloc
 	{
 	public:
@@ -79,11 +91,11 @@ namespace bx
 		~HandleAllocT();
 
 	private:
-		uint16_t m_padding[2*MaxHandlesT];
+		bgfx_handle m_padding[2*MaxHandlesT];
 	};
 
 	///
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	class HandleListT
 	{
 	public:
@@ -91,62 +103,62 @@ namespace bx
 		HandleListT();
 
 		///
-		void pushBack(uint16_t _handle);
+		void pushBack(bgfx_handle _handle);
 
 		///
-		uint16_t popBack();
+		bgfx_handle popBack();
 
 		///
-		void pushFront(uint16_t _handle);
+		void pushFront(bgfx_handle _handle);
 
 		///
-		uint16_t popFront();
+		bgfx_handle popFront();
 
 		///
-		uint16_t getFront() const;
+		bgfx_handle getFront() const;
 
 		///
-		uint16_t getBack() const;
+		bgfx_handle getBack() const;
 
 		///
-		uint16_t getNext(uint16_t _handle) const;
+		bgfx_handle getNext(bgfx_handle _handle) const;
 
 		///
-		uint16_t getPrev(uint16_t _handle) const;
+		bgfx_handle getPrev(bgfx_handle _handle) const;
 
 		///
-		void remove(uint16_t _handle);
+		void remove(bgfx_handle _handle);
 
 		///
 		void reset();
 
 	private:
 		///
-		void insertBefore(uint16_t _before, uint16_t _handle);
+		void insertBefore(bgfx_handle _before, bgfx_handle _handle);
 
 		///
-		void insertAfter(uint16_t _after, uint16_t _handle);
+		void insertAfter(bgfx_handle _after, bgfx_handle _handle);
 
 		///
-		bool isValid(uint16_t _handle) const;
+		bool isValid(bgfx_handle _handle) const;
 
 		///
-		void updateFrontBack(uint16_t _handle);
+		void updateFrontBack(bgfx_handle _handle);
 
-		uint16_t m_front;
-		uint16_t m_back;
+		bgfx_handle m_front;
+		bgfx_handle m_back;
 
 		struct Link
 		{
-			uint16_t m_prev;
-			uint16_t m_next;
+			bgfx_handle m_prev;
+			bgfx_handle m_next;
 		};
 
 		Link m_links[MaxHandlesT];
 	};
 
 	///
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	class HandleAllocLruT
 	{
 	public:
@@ -157,40 +169,40 @@ namespace bx
 		~HandleAllocLruT();
 
 		///
-		const uint16_t* getHandles() const;
+		const bgfx_handle* getHandles() const;
 
 		///
-		uint16_t getHandleAt(uint16_t _at) const;
+		bgfx_handle getHandleAt(bgfx_handle _at) const;
 
 		///
-		uint16_t getNumHandles() const;
+		bgfx_handle getNumHandles() const;
 
 		///
-		uint16_t getMaxHandles() const;
+		bgfx_handle getMaxHandles() const;
 
 		///
-		uint16_t alloc();
+		bgfx_handle alloc();
 
 		///
-		bool isValid(uint16_t _handle) const;
+		bool isValid(bgfx_handle _handle) const;
 
 		///
-		void free(uint16_t _handle);
+		void free(bgfx_handle _handle);
 
 		///
-		void touch(uint16_t _handle);
+		void touch(bgfx_handle _handle);
 
 		///
-		uint16_t getFront() const;
+		bgfx_handle getFront() const;
 
 		///
-		uint16_t getBack() const;
+		bgfx_handle getBack() const;
 
 		///
-		uint16_t getNext(uint16_t _handle) const;
+		bgfx_handle getNext(bgfx_handle _handle) const;
 
 		///
-		uint16_t getPrev(uint16_t _handle) const;
+		bgfx_handle getPrev(bgfx_handle _handle) const;
 
 		///
 		void reset();
@@ -201,7 +213,7 @@ namespace bx
 	};
 
 	///
-	template <uint32_t MaxCapacityT, typename KeyT = uint32_t>
+	template <uint32_t MaxCapacityT, typename KeyT = bgfx_handle>
 	class HandleHashMapT
 	{
 	public:
@@ -212,16 +224,16 @@ namespace bx
 		~HandleHashMapT();
 
 		///
-		bool insert(KeyT _key, uint16_t _handle);
+		bool insert(KeyT _key, bgfx_handle _handle);
 
 		///
 		bool removeByKey(KeyT _key);
 
 		///
-		bool removeByHandle(uint16_t _handle);
+		bool removeByHandle(bgfx_handle _handle);
 
 		///
-		uint16_t find(KeyT _key) const;
+		bgfx_handle find(KeyT _key) const;
 
 		///
 		void reset();
@@ -235,7 +247,7 @@ namespace bx
 		///
 		struct Iterator
 		{
-			uint16_t handle;
+			bgfx_handle handle;
 
 		private:
 			friend class HandleHashMapT<MaxCapacityT, KeyT>;
@@ -266,11 +278,11 @@ namespace bx
 		uint32_t m_numElements;
 
 		KeyT     m_key[MaxCapacityT];
-		uint16_t m_handle[MaxCapacityT];
+		bgfx_handle m_handle[MaxCapacityT];
 	};
 
 	///
-	template <uint16_t MaxHandlesT, typename KeyT = uint32_t>
+	template <bgfx_handle MaxHandlesT, typename KeyT = uint32_t>
 	class HandleHashMapAllocT
 	{
 	public:
@@ -281,31 +293,31 @@ namespace bx
 		~HandleHashMapAllocT();
 
 		///
-		uint16_t alloc(KeyT _key);
+		bgfx_handle alloc(KeyT _key);
 
 		///
 		void free(KeyT _key);
 
 		///
-		void free(uint16_t _handle);
+		void free(bgfx_handle _handle);
 
 		///
-		uint16_t find(KeyT _key) const;
+		bgfx_handle find(KeyT _key) const;
 
 		///
-		const uint16_t* getHandles() const;
+		const bgfx_handle* getHandles() const;
 
 		///
-		uint16_t getHandleAt(uint16_t _at) const;
+		bgfx_handle getHandleAt(bgfx_handle _at) const;
 
 		///
-		uint16_t getNumHandles() const;
+		bgfx_handle getNumHandles() const;
 
 		///
-		uint16_t getMaxHandles() const;
+		bgfx_handle getMaxHandles() const;
 
 		///
-		bool isValid(uint16_t _handle) const;
+		bool isValid(bgfx_handle _handle) const;
 
 		///
 		void reset();

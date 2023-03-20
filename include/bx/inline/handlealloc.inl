@@ -9,7 +9,7 @@
 
 namespace bx
 {
-	inline HandleAlloc::HandleAlloc(uint16_t _maxHandles)
+	inline HandleAlloc::HandleAlloc(bgfx_handle _maxHandles)
 		: m_numHandles(0)
 		, m_maxHandles(_maxHandles)
 	{
@@ -20,36 +20,36 @@ namespace bx
 	{
 	}
 
-	inline const uint16_t* HandleAlloc::getHandles() const
+	inline const bgfx_handle* HandleAlloc::getHandles() const
 	{
 		return getDensePtr();
 	}
 
-	inline uint16_t HandleAlloc::getHandleAt(uint16_t _at) const
+	inline bgfx_handle HandleAlloc::getHandleAt(bgfx_handle _at) const
 	{
 		return getDensePtr()[_at];
 	}
 
-	inline uint16_t HandleAlloc::getNumHandles() const
+	inline bgfx_handle HandleAlloc::getNumHandles() const
 	{
 		return m_numHandles;
 	}
 
-	inline uint16_t HandleAlloc::getMaxHandles() const
+	inline bgfx_handle HandleAlloc::getMaxHandles() const
 	{
 		return m_maxHandles;
 	}
 
-	inline uint16_t HandleAlloc::alloc()
+	inline bgfx_handle HandleAlloc::alloc()
 	{
 		if (m_numHandles < m_maxHandles)
 		{
-			uint16_t index = m_numHandles;
+			bgfx_handle index = m_numHandles;
 			++m_numHandles;
 
-			uint16_t* dense  = getDensePtr();
-			uint16_t  handle = dense[index];
-			uint16_t* sparse = getSparsePtr();
+			bgfx_handle* dense  = getDensePtr();
+			bgfx_handle  handle = dense[index];
+			bgfx_handle* sparse = getSparsePtr();
 			sparse[handle] = index;
 			return handle;
 		}
@@ -57,24 +57,24 @@ namespace bx
 		return kInvalidHandle;
 	}
 
-	inline bool HandleAlloc::isValid(uint16_t _handle) const
+	inline bool HandleAlloc::isValid(bgfx_handle _handle) const
 	{
-		uint16_t* dense  = getDensePtr();
-		uint16_t* sparse = getSparsePtr();
-		uint16_t  index  = sparse[_handle];
+		bgfx_handle* dense  = getDensePtr();
+		bgfx_handle* sparse = getSparsePtr();
+		bgfx_handle  index  = sparse[_handle];
 
 		return index < m_numHandles
 			&& dense[index] == _handle
 			;
 	}
 
-	inline void HandleAlloc::free(uint16_t _handle)
+	inline void HandleAlloc::free(bgfx_handle _handle)
 	{
-		uint16_t* dense  = getDensePtr();
-		uint16_t* sparse = getSparsePtr();
-		uint16_t index = sparse[_handle];
+		bgfx_handle* dense  = getDensePtr();
+		bgfx_handle* sparse = getSparsePtr();
+		bgfx_handle index = sparse[_handle];
 		--m_numHandles;
-		uint16_t temp = dense[m_numHandles];
+		bgfx_handle temp = dense[m_numHandles];
 		dense[m_numHandles] = _handle;
 		sparse[temp] = index;
 		dense[index] = temp;
@@ -83,27 +83,27 @@ namespace bx
 	inline void HandleAlloc::reset()
 	{
 		m_numHandles = 0;
-		uint16_t* dense = getDensePtr();
-		for (uint16_t ii = 0, num = m_maxHandles; ii < num; ++ii)
+		bgfx_handle* dense = getDensePtr();
+		for (bgfx_handle ii = 0, num = m_maxHandles; ii < num; ++ii)
 		{
 			dense[ii] = ii;
 		}
 	}
 
-	inline uint16_t* HandleAlloc::getDensePtr() const
+	inline bgfx_handle* HandleAlloc::getDensePtr() const
 	{
 		uint8_t* ptr = (uint8_t*)reinterpret_cast<const uint8_t*>(this);
-		return (uint16_t*)&ptr[sizeof(HandleAlloc)];
+		return (bgfx_handle*)&ptr[sizeof(HandleAlloc)];
 	}
 
-	inline uint16_t* HandleAlloc::getSparsePtr() const
+	inline bgfx_handle* HandleAlloc::getSparsePtr() const
 	{
 		return &getDensePtr()[m_maxHandles];
 	}
 
-	inline HandleAlloc* createHandleAlloc(AllocatorI* _allocator, uint16_t _maxHandles)
+	inline HandleAlloc* createHandleAlloc(AllocatorI* _allocator, bgfx_handle _maxHandles)
 	{
-		uint8_t* ptr = (uint8_t*)BX_ALLOC(_allocator, sizeof(HandleAlloc) + 2*_maxHandles*sizeof(uint16_t) );
+		uint8_t* ptr = (uint8_t*)BX_ALLOC(_allocator, sizeof(HandleAlloc) + 2*_maxHandles*sizeof(bgfx_handle) );
 		return BX_PLACEMENT_NEW(ptr, HandleAlloc)(_maxHandles);
 	}
 
@@ -113,33 +113,33 @@ namespace bx
 		BX_FREE(_allocator, _handleAlloc);
 	}
 
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	inline HandleAllocT<MaxHandlesT>::HandleAllocT()
 		: HandleAlloc(MaxHandlesT)
 	{
 	}
 
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	inline HandleAllocT<MaxHandlesT>::~HandleAllocT()
 	{
 	}
 
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	inline HandleListT<MaxHandlesT>::HandleListT()
 	{
 		reset();
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline void HandleListT<MaxHandlesT>::pushBack(uint16_t _handle)
+	template <bgfx_handle MaxHandlesT>
+	inline void HandleListT<MaxHandlesT>::pushBack(bgfx_handle _handle)
 	{
 		insertAfter(m_back, _handle);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleListT<MaxHandlesT>::popBack()
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleListT<MaxHandlesT>::popBack()
 	{
-		uint16_t last = kInvalidHandle != m_back
+		bgfx_handle last = kInvalidHandle != m_back
 			? m_back
 			: m_front
 			;
@@ -152,16 +152,16 @@ namespace bx
 		return last;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline void HandleListT<MaxHandlesT>::pushFront(uint16_t _handle)
+	template <bgfx_handle MaxHandlesT>
+	inline void HandleListT<MaxHandlesT>::pushFront(bgfx_handle _handle)
 	{
 		insertBefore(m_front, _handle);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleListT<MaxHandlesT>::popFront()
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleListT<MaxHandlesT>::popFront()
 	{
-		uint16_t front = m_front;
+		bgfx_handle front = m_front;
 
 		if (kInvalidHandle != front)
 		{
@@ -171,36 +171,36 @@ namespace bx
 		return front;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleListT<MaxHandlesT>::getFront() const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleListT<MaxHandlesT>::getFront() const
 	{
 		return m_front;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleListT<MaxHandlesT>::getBack() const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleListT<MaxHandlesT>::getBack() const
 	{
 		return m_back;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleListT<MaxHandlesT>::getNext(uint16_t _handle) const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleListT<MaxHandlesT>::getNext(bgfx_handle _handle) const
 	{
 		BX_ASSERT(isValid(_handle), "Invalid handle %d!", _handle);
 		const Link& curr = m_links[_handle];
 		return curr.m_next;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleListT<MaxHandlesT>::getPrev(uint16_t _handle) const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleListT<MaxHandlesT>::getPrev(bgfx_handle _handle) const
 	{
 		BX_ASSERT(isValid(_handle), "Invalid handle %d!", _handle);
 		const Link& curr = m_links[_handle];
 		return curr.m_prev;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline void HandleListT<MaxHandlesT>::remove(uint16_t _handle)
+	template <bgfx_handle MaxHandlesT>
+	inline void HandleListT<MaxHandlesT>::remove(bgfx_handle _handle)
 	{
 		BX_ASSERT(isValid(_handle), "Invalid handle %d!", _handle);
 		Link& curr = m_links[_handle];
@@ -229,7 +229,7 @@ namespace bx
 		curr.m_next = kInvalidHandle;
 	}
 
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	inline void HandleListT<MaxHandlesT>::reset()
 	{
 		memSet(m_links, 0xff, sizeof(m_links) );
@@ -237,8 +237,8 @@ namespace bx
 		m_back  = kInvalidHandle;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline void HandleListT<MaxHandlesT>::insertBefore(uint16_t _before, uint16_t _handle)
+	template <bgfx_handle MaxHandlesT>
+	inline void HandleListT<MaxHandlesT>::insertBefore(bgfx_handle _before, bgfx_handle _handle)
 	{
 		Link& curr = m_links[_handle];
 		curr.m_next = _before;
@@ -259,8 +259,8 @@ namespace bx
 		updateFrontBack(_handle);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline void HandleListT<MaxHandlesT>::insertAfter(uint16_t _after, uint16_t _handle)
+	template <bgfx_handle MaxHandlesT>
+	inline void HandleListT<MaxHandlesT>::insertAfter(bgfx_handle _after, bgfx_handle _handle)
 	{
 		Link& curr = m_links[_handle];
 		curr.m_prev = _after;
@@ -281,14 +281,14 @@ namespace bx
 		updateFrontBack(_handle);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline bool HandleListT<MaxHandlesT>::isValid(uint16_t _handle) const
+	template <bgfx_handle MaxHandlesT>
+	inline bool HandleListT<MaxHandlesT>::isValid(bgfx_handle _handle) const
 	{
 		return _handle < MaxHandlesT;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline void HandleListT<MaxHandlesT>::updateFrontBack(uint16_t _handle)
+	template <bgfx_handle MaxHandlesT>
+	inline void HandleListT<MaxHandlesT>::updateFrontBack(bgfx_handle _handle)
 	{
 		Link& curr = m_links[_handle];
 
@@ -303,45 +303,45 @@ namespace bx
 		}
 	}
 
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	inline HandleAllocLruT<MaxHandlesT>::HandleAllocLruT()
 	{
 		reset();
 	}
 
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	inline HandleAllocLruT<MaxHandlesT>::~HandleAllocLruT()
 	{
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline const uint16_t* HandleAllocLruT<MaxHandlesT>::getHandles() const
+	template <bgfx_handle MaxHandlesT>
+	inline const bgfx_handle* HandleAllocLruT<MaxHandlesT>::getHandles() const
 	{
 		return m_alloc.getHandles();
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleAllocLruT<MaxHandlesT>::getHandleAt(uint16_t _at) const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleAllocLruT<MaxHandlesT>::getHandleAt(bgfx_handle _at) const
 	{
 		return m_alloc.getHandleAt(_at);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleAllocLruT<MaxHandlesT>::getNumHandles() const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleAllocLruT<MaxHandlesT>::getNumHandles() const
 	{
 		return m_alloc.getNumHandles();
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleAllocLruT<MaxHandlesT>::getMaxHandles() const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleAllocLruT<MaxHandlesT>::getMaxHandles() const
 	{
 		return m_alloc.getMaxHandles();
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleAllocLruT<MaxHandlesT>::alloc()
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleAllocLruT<MaxHandlesT>::alloc()
 	{
-		uint16_t handle = m_alloc.alloc();
+		bgfx_handle handle = m_alloc.alloc();
 		if (kInvalidHandle != handle)
 		{
 			m_list.pushFront(handle);
@@ -349,53 +349,53 @@ namespace bx
 		return handle;
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline bool HandleAllocLruT<MaxHandlesT>::isValid(uint16_t _handle) const
+	template <bgfx_handle MaxHandlesT>
+	inline bool HandleAllocLruT<MaxHandlesT>::isValid(bgfx_handle _handle) const
 	{
 		return m_alloc.isValid(_handle);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline void HandleAllocLruT<MaxHandlesT>::free(uint16_t _handle)
+	template <bgfx_handle MaxHandlesT>
+	inline void HandleAllocLruT<MaxHandlesT>::free(bgfx_handle _handle)
 	{
 		BX_ASSERT(isValid(_handle), "Invalid handle %d!", _handle);
 		m_list.remove(_handle);
 		m_alloc.free(_handle);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline void HandleAllocLruT<MaxHandlesT>::touch(uint16_t _handle)
+	template <bgfx_handle MaxHandlesT>
+	inline void HandleAllocLruT<MaxHandlesT>::touch(bgfx_handle _handle)
 	{
 		BX_ASSERT(isValid(_handle), "Invalid handle %d!", _handle);
 		m_list.remove(_handle);
 		m_list.pushFront(_handle);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleAllocLruT<MaxHandlesT>::getFront() const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleAllocLruT<MaxHandlesT>::getFront() const
 	{
 		return m_list.getFront();
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleAllocLruT<MaxHandlesT>::getBack() const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleAllocLruT<MaxHandlesT>::getBack() const
 	{
 		return m_list.getBack();
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleAllocLruT<MaxHandlesT>::getNext(uint16_t _handle) const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleAllocLruT<MaxHandlesT>::getNext(bgfx_handle _handle) const
 	{
 		return m_list.getNext(_handle);
 	}
 
-	template <uint16_t MaxHandlesT>
-	inline uint16_t HandleAllocLruT<MaxHandlesT>::getPrev(uint16_t _handle) const
+	template <bgfx_handle MaxHandlesT>
+	inline bgfx_handle HandleAllocLruT<MaxHandlesT>::getPrev(bgfx_handle _handle) const
 	{
 		return m_list.getPrev(_handle);
 	}
 
-	template <uint16_t MaxHandlesT>
+	template <bgfx_handle MaxHandlesT>
 	inline void HandleAllocLruT<MaxHandlesT>::reset()
 	{
 		m_list.reset();
@@ -415,7 +415,7 @@ namespace bx
 	}
 
 	template <uint32_t MaxCapacityT, typename KeyT>
-	inline bool HandleHashMapT<MaxCapacityT, KeyT>::insert(KeyT _key, uint16_t _handle)
+	inline bool HandleHashMapT<MaxCapacityT, KeyT>::insert(KeyT _key, bgfx_handle _handle)
 	{
 		if (kInvalidHandle == _handle)
 		{
@@ -461,7 +461,7 @@ namespace bx
 	}
 
 	template <uint32_t MaxCapacityT, typename KeyT>
-	inline bool HandleHashMapT<MaxCapacityT, KeyT>::removeByHandle(uint16_t _handle)
+	inline bool HandleHashMapT<MaxCapacityT, KeyT>::removeByHandle(bgfx_handle _handle)
 	{
 		if (kInvalidHandle != _handle)
 		{
@@ -478,7 +478,7 @@ namespace bx
 	}
 
 	template <uint32_t MaxCapacityT, typename KeyT>
-	inline uint16_t HandleHashMapT<MaxCapacityT, KeyT>::find(KeyT _key) const
+	inline bgfx_handle HandleHashMapT<MaxCapacityT, KeyT>::find(KeyT _key) const
 	{
 		uint32_t idx = findIndex(_key);
 		if (UINT32_MAX != idx)
@@ -585,7 +585,7 @@ namespace bx
 				const KeyT key = m_key[idx];
 				if (idx != findIndex(key) )
 				{
-					const uint16_t handle = m_handle[idx];
+					const bgfx_handle handle = m_handle[idx];
 					m_handle[idx] = kInvalidHandle;
 					--m_numElements;
 					insert(key, handle);
@@ -612,21 +612,21 @@ namespace bx
 		return result;
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
+	template <bgfx_handle MaxHandlesT, typename KeyT>
 	inline HandleHashMapAllocT<MaxHandlesT, KeyT>::HandleHashMapAllocT()
 	{
 		reset();
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
+	template <bgfx_handle MaxHandlesT, typename KeyT>
 	inline HandleHashMapAllocT<MaxHandlesT, KeyT>::~HandleHashMapAllocT()
 	{
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
-	inline uint16_t HandleHashMapAllocT<MaxHandlesT, KeyT>::alloc(KeyT _key)
+	template <bgfx_handle MaxHandlesT, typename KeyT>
+	inline bgfx_handle HandleHashMapAllocT<MaxHandlesT, KeyT>::alloc(KeyT _key)
 	{
-		uint16_t handle = m_alloc.alloc();
+		bgfx_handle handle = m_alloc.alloc();
 		if (kInvalidHandle == handle)
 		{
 			return kInvalidHandle;
@@ -642,10 +642,10 @@ namespace bx
 		return handle;
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
+	template <bgfx_handle MaxHandlesT, typename KeyT>
 	inline void HandleHashMapAllocT<MaxHandlesT, KeyT>::free(KeyT _key)
 	{
-		uint16_t handle = m_table.find(_key);
+		bgfx_handle handle = m_table.find(_key);
 		if (kInvalidHandle == handle)
 		{
 			return;
@@ -655,50 +655,50 @@ namespace bx
 		m_alloc.free(handle);
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
-	inline void HandleHashMapAllocT<MaxHandlesT, KeyT>::free(uint16_t _handle)
+	template <bgfx_handle MaxHandlesT, typename KeyT>
+	inline void HandleHashMapAllocT<MaxHandlesT, KeyT>::free(bgfx_handle _handle)
 	{
 		m_table.removeByHandle(_handle);
 		m_alloc.free(_handle);
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
-	inline uint16_t HandleHashMapAllocT<MaxHandlesT, KeyT>::find(KeyT _key) const
+	template <bgfx_handle MaxHandlesT, typename KeyT>
+	inline bgfx_handle HandleHashMapAllocT<MaxHandlesT, KeyT>::find(KeyT _key) const
 	{
 		return m_table.find(_key);
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
-	inline const uint16_t* HandleHashMapAllocT<MaxHandlesT, KeyT>::getHandles() const
+	template <bgfx_handle MaxHandlesT, typename KeyT>
+	inline const bgfx_handle* HandleHashMapAllocT<MaxHandlesT, KeyT>::getHandles() const
 	{
 		return m_alloc.getHandles();
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
-	inline uint16_t HandleHashMapAllocT<MaxHandlesT, KeyT>::getHandleAt(uint16_t _at) const
+	template <bgfx_handle MaxHandlesT, typename KeyT>
+	inline bgfx_handle HandleHashMapAllocT<MaxHandlesT, KeyT>::getHandleAt(bgfx_handle _at) const
 	{
 		return m_alloc.getHandleAt(_at);
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
-	inline uint16_t HandleHashMapAllocT<MaxHandlesT, KeyT>::getNumHandles() const
+	template <bgfx_handle MaxHandlesT, typename KeyT>
+	inline bgfx_handle HandleHashMapAllocT<MaxHandlesT, KeyT>::getNumHandles() const
 	{
 		return m_alloc.getNumHandles();
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
-	inline uint16_t HandleHashMapAllocT<MaxHandlesT, KeyT>::getMaxHandles() const
+	template <bgfx_handle MaxHandlesT, typename KeyT>
+	inline bgfx_handle HandleHashMapAllocT<MaxHandlesT, KeyT>::getMaxHandles() const
 	{
 		return m_alloc.getMaxHandles();
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
-	inline bool HandleHashMapAllocT<MaxHandlesT, KeyT>::isValid(uint16_t _handle) const
+	template <bgfx_handle MaxHandlesT, typename KeyT>
+	inline bool HandleHashMapAllocT<MaxHandlesT, KeyT>::isValid(bgfx_handle _handle) const
 	{
 		return m_alloc.isValid(_handle);
 	}
 
-	template <uint16_t MaxHandlesT, typename KeyT>
+	template <bgfx_handle MaxHandlesT, typename KeyT>
 	inline void HandleHashMapAllocT<MaxHandlesT, KeyT>::reset()
 	{
 		m_table.reset();
